@@ -222,11 +222,15 @@ module Codecov
         @debug "Codecov.io API URL:\n" * mask_token(uri_str)
 
         if !dry_run
-            heads   = Dict("Content-Type" => "application/json",
-                           "Accept" => "application/json")
-            data    = to_json(fcs)
-            req     = HTTP.post(uri_str; body = JSON.json(data), headers = heads)
-            @debug "Result of submission:" * String(req)
+            # Tell Codecov we have an upload for them
+            response = HTTP.post(uri_str; headers=Dict("Accept" => "text/plain"))
+            # Get the temporary URL to use for uploading to S3
+            s3url = split(String(response.body), '\n')[2]
+            # Upload to S3
+            request = HTTP.put(s3url; body=json(to_json(fcs)),
+                               header=Dict("Content-Type" => "application/json",
+                                           "x-amz-storage-class" => "REDUCED_REDUNDANCY"))
+            @debug "Result of submission:" * String(request)
         end
     end
 
@@ -246,7 +250,7 @@ module Codecov
         codecov_url = get(kwargs, :codecov_url, "https://codecov.io")
         codecov_url[end] == "/" && error("the codecov_url should not end with a /, given url $(repr(codecov_url))")
 
-        uri_str = "$(codecov_url)/upload/v2?"
+        uri_str = "$(codecov_url)/upload/v4?"
         for (k, v) in kwargs
             # add all except a few special key/value pairs to the URL
             # (:verbose is there for backwards compatibility with versions
