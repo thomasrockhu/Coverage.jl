@@ -289,3 +289,4 @@ For AppVeyor, add this to `.appveyor.yml`:
 * [Weave.jl](https://github.com/mpastell/Weave.jl)
 * [WeightedStats.jl](https://github.com/tensorjack/WeightedStats.jl)
 * [YAML.jl](https://github.com/dcjones/YAML.jl)
+
